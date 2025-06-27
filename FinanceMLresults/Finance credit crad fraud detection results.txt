@@ -1,0 +1,583 @@
+------------------------Finance Credit Card Fraud Detection-------------------------------
+
+]
+# =====================================
+# 2. DATA LOADING AND INITIAL EXPLORATION
+# =====================================
+
+# Load the datasets
+# Replace these paths with your actual file paths
+train_path = "/content/train_dataset_final1.csv"  # Update with your train dataset path
+validation_path = "/content/validate_dataset_final.csv"  # Update with your validation dataset path
+
+# Load training data
+
+Training dataset shape: (25247, 27)
+Validation dataset shape: (5016, 26)
+
+=== DATASET OVERVIEW ===
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 25247 entries, 0 to 25246
+Data columns (total 27 columns):
+ #   Column              Non-Null Count  Dtype  
+---  ------              --------------  -----  
+ 0   Customer_ID         25247 non-null  int64  
+ 1   marriage            25247 non-null  int64  
+ 2   sex                 25247 non-null  int64  
+ 3   education           25247 non-null  int64  
+ 4   LIMIT_BAL           25247 non-null  int64  
+ 5   age                 25121 non-null  float64
+ 6   pay_0               25247 non-null  int64  
+ 7   pay_2               25247 non-null  int64  
+ 8   pay_3               25247 non-null  int64  
+ 9   pay_4               25247 non-null  int64  
+ 10  pay_5               25247 non-null  int64  
+ 11  pay_6               25247 non-null  int64  
+ 12  Bill_amt1           25247 non-null  float64
+ 13  Bill_amt2           25247 non-null  float64
+ 14  Bill_amt3           25247 non-null  float64
+ 15  Bill_amt4           25247 non-null  float64
+ 16  Bill_amt5           25247 non-null  float64
+ 17  Bill_amt6           25247 non-null  float64
+ 18  pay_amt1            25247 non-null  float64
+ 19  pay_amt2            25247 non-null  float64
+ 20  pay_amt3            25247 non-null  float64
+ 21  pay_amt4            25247 non-null  float64
+ 22  pay_amt5            25247 non-null  float64
+ 23  pay_amt6            25247 non-null  float64
+ 24  AVG_Bill_amt        25247 non-null  float64
+ 25  PAY_TO_BILL_ratio   25247 non-null  float64
+ 26  next_month_default  25247 non-null  int64  
+dtypes: float64(15), int64(12)
+memory usage: 5.2 MB
+None
+
+=== FIRST FEW ROWS ===
+   Customer_ID  marriage  sex  education  LIMIT_BAL   age  pay_0  pay_2  \
+0         5017         2    0          2      60000  25.0      2      2   
+1         5018         2    1          1     290000  24.0      0      0   
+2         5019         1    0          2     180000  63.0      0      0   
+3         5020         1    1          2     210000  43.0      0      0   
+4         5021         2    0          1     280000  32.0     -2     -2   
+
+   pay_3  pay_4  pay_5  pay_6  Bill_amt1  Bill_amt2  Bill_amt3  Bill_amt4  \
+0      2      0      0      0   60323.86   60728.22   56472.74   28602.01   
+1     -2     -2     -1      0   11157.67       0.00       0.88       0.65   
+2      0      0      0      0   47930.96   48921.91   50034.26   50748.90   
+3      0      0      0      0   91152.44   92916.01   90652.30   85295.56   
+4     -2     -2     -2     -2   19666.40     999.04    3186.48   44932.48   
+
+   Bill_amt5  Bill_amt6  pay_amt1  pay_amt2  pay_amt3  pay_amt4  pay_amt5  \
+0   22191.53   20750.63   2000.21      0.00   1134.85   1821.78   1500.03   
+1    2700.96    1350.30      0.00      0.17      0.00   2700.10      0.00   
+2   51902.56   52991.51   2086.94   2199.99   1845.66   2000.35   1923.00   
+3   80416.75   76945.47   3348.07   3380.91   3400.45   2683.97   2744.00   
+4    2099.77       1.35    999.78   3186.27  45027.78   2100.09      0.01   
+
+   pay_amt6  AVG_Bill_amt  PAY_TO_BILL_ratio  next_month_default  
+0   1500.24      41511.50               0.03                   0  
+1   1349.72       2534.50               0.27                   0  
+2   1999.78      50422.00               0.04                   0  
+3   2892.10      86229.50               0.04                   0  
+4      0.27      11814.33               0.72                   0  
+
+=== TARGET VARIABLE DISTRIBUTION ===
+next_month_default
+0    20440
+1     4807
+Name: count, dtype: int64
+Default rate: 0.190
+
+
+=== FINANCIAL INSIGHTS ===
+Default rate by Gender:
+        count    mean     std
+Female   9995  0.2086  0.4063
+Male    15252  0.1785  0.3829
+
+Default rate by Education:
+           count    mean     std
+education                       
+0             14  0.0000  0.0000
+1           8988  0.1618  0.3683
+2          11717  0.2091  0.4067
+3           4115  0.2131  0.4096
+4            116  0.0431  0.2040
+5            253  0.0593  0.2366
+6             44  0.1364  0.3471
+
+Default rate by Marriage:
+          count    mean     std
+marriage                       
+0            53  0.0755  0.2667
+1         11480  0.2037  0.4028
+2         13441  0.1789  0.3832
+3           273  0.2198  0.4149
+
+Credit Limit Statistics by Default Status:
+              count       mean        std      min      25%       50%  \
+No Default  20440.0  177539.24  131640.12  10000.0  60000.0  150000.0   
+Default      4807.0  129234.45  114204.61  10000.0  50000.0   90000.0   
+
+                 75%        max  
+No Default  250000.0  1000000.0  
+Default     190000.0   720000.0  
+
+Payment Status Analysis:
+
+PAY_0 - Default rates by payment status:
+       Count  Default_Rate
+pay_0                     
+-2      2331        0.1107
+-1      4821        0.1464
+ 0     12667        0.1076
+ 1      3030        0.2993
+ 2      2047        0.6507
+ 3       244        0.7213
+ 4        56        0.6607
+ 5        21        0.5238
+ 6         8        0.3750
+ 7         8        0.7500
+ 8        14        0.5714
+--------------------------------------------------
+
+PAY_2 - Default rates by payment status:
+       Count  Default_Rate
+pay_2                     
+-2      3210        0.1561
+-1      5128        0.1404
+ 0     13424        0.1337
+ 1        25        0.2000
+ 2      3098        0.5139
+ 3       239        0.5439
+ 4        77        0.4675
+ 5        19        0.5789
+ 6        11        0.7273
+ 7        15        0.6000
+ 8         1        0.0000
+--------------------------------------------------
+
+PAY_3 - Default rates by payment status:
+       Count  Default_Rate
+pay_3                     
+-2      3480        0.1592
+-1      5019        0.1329
+ 0     13415        0.1484
+ 1         4        0.2500
+ 2      3039        0.4722
+ 3       179        0.5196
+ 4        57        0.5439
+ 5        18        0.6111
+ 6        17        0.5882
+ 7        18        0.7778
+ 8         1        0.0000
+--------------------------------------------------
+
+PAY_4 - Default rates by payment status:
+       Count  Default_Rate
+pay_4                     
+-2      3694        0.1659
+-1      4816        0.1354
+ 0     13961        0.1565
+ 1         2        0.5000
+ 2      2509        0.4763
+ 3       137        0.5693
+ 4        52        0.6346
+ 5        29        0.5172
+ 6         4        0.2500
+ 7        43        0.7907
+--------------------------------------------------
+
+PAY_5 - Default rates by payment status:
+       Count  Default_Rate
+pay_5                     
+-2      3859        0.1674
+-1      4680        0.1404
+ 0     14345        0.1606
+ 2      2100        0.4943
+ 3       133        0.5865
+ 4        72        0.5694
+ 5        14        0.5714
+ 6         1        0.0000
+ 7        43        0.8140
+--------------------------------------------------
+
+PAY_6 - Default rates by payment status:
+       Count  Default_Rate
+pay_6                     
+-2      4139        0.1703
+-1      4882        0.1469
+ 0     13769        0.1604
+ 2      2223        0.4633
+ 3       134        0.6045
+ 4        41        0.5854
+ 5        10        0.4000
+ 6        14        0.6429
+ 7        34        0.7941
+ 8         1        1.0000
+--------------------------------------------------
+
+PAY_AMT1 - Default rates by payment status:
+           Count  Default_Rate
+pay_amt1                      
+0.00        2185        0.3240
+0.01          86        0.3256
+0.02          95        0.3368
+0.03          83        0.3253
+0.04         105        0.3524
+...          ...           ...
+405016.26      1        0.0000
+423902.79      1        0.0000
+493358.06      1        0.0000
+505000.25      1        0.0000
+873551.98      1        0.0000
+
+[15071 rows x 2 columns]
+--------------------------------------------------
+
+PAY_AMT2 - Default rates by payment status:
+            Count  Default_Rate
+pay_amt2                       
+0.00         2286        0.2970
+0.01           92        0.3043
+0.02           79        0.2405
+0.03           72        0.2917
+0.04           67        0.3134
+...           ...           ...
+580464.22       1        0.0000
+1024516.25      1        0.0000
+1215470.91      1        0.0000
+1227081.98      1        0.0000
+1684259.18      1        0.0000
+
+[15466 rows x 2 columns]
+--------------------------------------------------
+
+PAY_AMT3 - Default rates by payment status:
+           Count  Default_Rate
+pay_amt3                      
+0.00        2551        0.2779
+0.01         111        0.2523
+0.02          95        0.1895
+0.03         120        0.2500
+0.04         114        0.3333
+...          ...           ...
+400972.09      1        0.0000
+417588.26      1        0.0000
+508228.86      1        1.0000
+889042.80      1        0.0000
+896040.15      1        0.0000
+
+[14332 rows x 2 columns]
+--------------------------------------------------
+
+PAY_AMT4 - Default rates by payment status:
+           Count  Default_Rate
+pay_amt4                      
+0.00        2705        0.2743
+0.01         130        0.2615
+0.02         144        0.2847
+0.03         125        0.1760
+0.04         121        0.2727
+...          ...           ...
+400046.00      1        0.0000
+432129.91      1        1.0000
+497000.15      1        0.0000
+528896.82      1        0.0000
+621000.08      1        0.0000
+
+[13555 rows x 2 columns]
+--------------------------------------------------
+
+PAY_AMT5 - Default rates by payment status:
+           Count  Default_Rate
+pay_amt5                      
+0.00        2854        0.2474
+0.01         134        0.3134
+0.02         138        0.2754
+0.03         150        0.2467
+0.04         136        0.3015
+...          ...           ...
+331999.94      1        1.0000
+379266.99      1        0.0000
+388070.90      1        0.0000
+417990.04      1        0.0000
+426529.18      1        0.0000
+
+[13241 rows x 2 columns]
+--------------------------------------------------
+
+PAY_AMT6 - Default rates by payment status:
+           Count  Default_Rate
+pay_amt6                      
+0.00        3102        0.2495
+0.01         128        0.3125
+0.02         129        0.2713
+0.03         165        0.2364
+0.04         120        0.1833
+...          ...           ...
+376999.92      2        0.0000
+403499.94      1        0.0000
+421999.97      1        0.0000
+527143.21      1        0.0000
+528666.15      1        0.0000
+
+[13289 rows x 2 columns]
+--------------------------------------------------
+
+
+
+=== FEATURE ENGINEERING ===
+Feature engineering completed. New shape: (25247, 49)
+New features added: 22
+Feature engineering completed. New shape: (5016, 48)
+New features added: 22
+New features created: ['credit_utilization', 'avg_payment_delay', 'max_payment_delay', 'payment_delay_count', 'payment_consistency', 'recent_avg_delay', 'payment_volatility', 'avg_payment_amt', 'age_<30', 'age_30-40', 'age_40-50', 'age_50-60', 'age_60+', 'limit_Low', 'limit_Medium', 'limit_High', 'limit_Very High', 'financial_stress', 'adequacy_Full', 'adequacy_Minimal', 'adequacy_Partial', 'age_limit_interaction']
+
+
+
+=== ENHANCED DATA PREPROCESSING ===
+Preprocessing with robust scaling...
+Training features shape: (25247, 48)
+Validation features shape: (5016, 48)
+Training target shape: (25247,)
+Target distribution: {0: 20440, 1: 4807}
+
+Training split shape: (20197, 48)
+Test split shape: (5050, 48)
+
+Feature Summary:
+- Total features: 48
+- Categorical features encoded: 0
+- Scaling method: Robust
+- Missing values handled: ✓
+
+Training Data Quality:
+- Shape: (25247, 48)
+- Missing values: 0
+- Infinite values: 0
+- Data types: {dtype('float64'): 48}
+
+Validation Data Quality:
+- Shape: (5016, 48)
+- Missing values: 0
+- Infinite values: 0
+- Data types: {dtype('float64'): 48}
+
+
+
+=== ADVANCED CLASS IMBALANCE HANDLING ===
+
+Complete Training Set Class Distribution:
+  Class 0: 20,440 (81.0%)
+  Class 1: 4,807 (19.0%)
+Imbalance Ratio: 4.25:1
+
+Original Training Class Distribution:
+  Class 0: 16,352 (81.0%)
+  Class 1: 3,845 (19.0%)
+Imbalance Ratio: 4.25:1
+
+Selected balancing method: SMOTE
+
+After SMOTE Class Distribution:
+  Class 0: 16,352 (50.0%)
+  Class 1: 16,352 (50.0%)
+Imbalance Ratio: 1.00:1
+
+Class weights for model training: {np.int64(0): np.float64(0.6175697162426614), np.int64(1): np.float64(2.6263979193758127)}
+
+=== BALANCING SUMMARY ===
+Method used: SMOTE
+Original samples: 20,197
+Balanced samples: 32,704
+Sample change: +61.9%
+
+Training sets prepared:
+- Original: (20197, 48)
+- Balanced: (32704, 48)
+- Test (unchanged): (5050, 48)
+
+
+
+=== PREPARING DATA FOR TRAINING ===
+==================================================
+Original feature names sample: ['AVG_Bill_amt', 'Bill_amt1', 'Bill_amt2']
+Cleaned feature names sample: ['AVG_Bill_amt', 'Bill_amt1', 'Bill_amt2']
+
+=== MODEL TRAINING AND EVALUATION ===
+==================================================
+
+Training Logistic Regression...
+------------------------------
+✓ Logistic Regression trained successfully in 1.97 seconds
+Logistic Regression Results:
+  Accuracy: 0.7216
+  Balanced_Accuracy: 0.6802
+  Precision: 0.3633
+  Recall: 0.6133
+  Specificity: 0.7471
+  F1_Score: 0.4563
+  F2_Score: 0.5391
+  MCC: 0.3030
+  AUC_ROC: 0.7408
+  AUC_PR: 0.4748
+  Log_Loss: 0.5869
+  Brier_Score: 0.1988
+  Training Time: 1.97 seconds
+
+Training Decision Tree...
+------------------------------
+✓ Decision Tree trained successfully in 1.84 seconds
+Decision Tree Results:
+  Accuracy: 0.7986
+  Balanced_Accuracy: 0.6777
+  Precision: 0.4720
+  Recall: 0.4823
+  Specificity: 0.8730
+  F1_Score: 0.4771
+  F2_Score: 0.4802
+  MCC: 0.3525
+  AUC_ROC: 0.7120
+  AUC_PR: 0.4110
+  Log_Loss: 1.0262
+  Brier_Score: 0.1632
+  Training Time: 1.84 seconds
+
+Training Random Forest...
+------------------------------
+✓ Random Forest trained successfully in 14.79 seconds
+Random Forest Results:
+  Accuracy: 0.8273
+  Balanced_Accuracy: 0.6895
+  Precision: 0.5557
+  Recall: 0.4667
+  Specificity: 0.9122
+  F1_Score: 0.5073
+  F2_Score: 0.4822
+  MCC: 0.4059
+  AUC_ROC: 0.7767
+  AUC_PR: 0.5181
+  Log_Loss: 0.4378
+  Brier_Score: 0.1372
+  Training Time: 14.79 seconds
+
+Training XGBoost...
+------------------------------
+✓ XGBoost trained successfully in 1.66 seconds
+XGBoost Results:
+  Accuracy: 0.8426
+  Balanced_Accuracy: 0.6691
+  Precision: 0.6437
+  Recall: 0.3888
+  Specificity: 0.9494
+  F1_Score: 0.4848
+  F2_Score: 0.4222
+  MCC: 0.4161
+  AUC_ROC: 0.7759
+  AUC_PR: 0.5236
+  Log_Loss: 0.4030
+  Brier_Score: 0.1237
+  Training Time: 1.66 seconds
+
+Training LightGBM...
+------------------------------
+✓ LightGBM trained successfully in 1.92 seconds
+LightGBM Results:
+  Accuracy: 0.8408
+  Balanced_Accuracy: 0.6648
+  Precision: 0.6376
+  Recall: 0.3805
+  Specificity: 0.9491
+  F1_Score: 0.4766
+  F2_Score: 0.4138
+  MCC: 0.4078
+  AUC_ROC: 0.7769
+  AUC_PR: 0.5189
+  Log_Loss: 0.4023
+  Brier_Score: 0.1235
+  Training Time: 1.92 seconds
+
+=== MODEL COMPARISON ===
+==================================================
+                 Model  Accuracy  Balanced_Accuracy  Precision  Recall  \
+0  Logistic Regression    0.7216             0.6802     0.3633  0.6133   
+1        Decision Tree    0.7986             0.6777     0.4720  0.4823   
+2        Random Forest    0.8273             0.6895     0.5557  0.4667   
+3              XGBoost    0.8426             0.6691     0.6437  0.3888   
+4             LightGBM    0.8408             0.6648     0.6376  0.3805   
+
+   F1_Score  F2_Score  AUC_ROC     MCC  Training_Time  
+0    0.4563    0.5391   0.7408  0.3030         1.9705  
+1    0.4771    0.4802   0.7120  0.3525         1.8354  
+2    0.5073    0.4822   0.7767  0.4059        14.7889  
+3    0.4848    0.4222   0.7759  0.4161         1.6573  
+4    0.4766    0.4138   0.7769  0.4078         1.9221  
+
+=== BEST PERFORMING MODELS ===
+==================================================
+Best Accuracy: XGBoost (0.8426)
+Best F1_Score: Random Forest (0.5073)
+Best AUC_ROC: LightGBM (0.7769)
+Best MCC: XGBoost (0.4161)
+
+Validation columns: ['Customer_ID', 'marriage', 'sex', 'education', 'LIMIT_BAL', 'age', 'pay_0', 'pay_2', 'pay_3', 'pay_4', 'pay_5', 'pay_6', 'Bill_amt1', 'Bill_amt2', 'Bill_amt3', 'Bill_amt4', 'Bill_amt5', 'Bill_amt6', 'pay_amt1', 'pay_amt2', 'pay_amt3', 'pay_amt4', 'pay_amt5', 'pay_amt6', 'AVG_Bill_amt', 'PAY_TO_BILL_ratio']
+
+
+=== GENERATING FINAL PREDICTIONS ===
+Predictions saved to: submission_22112016.csv
+Submission shape: (5016, 2)
+Default predictions: 2791
+Default rate: 0.556
+
+First 5 predictions:
+   Customer  next_month_default
+0         1                   1
+1         2                   0
+2         3                   0
+3         4                   1
+4         5                   0
+
+
+✓ SHAP analysis completed successfully.
+
+==================================================
+PROJECT INSIGHTS AND SUMMARY
+==================================================
+
+1. MODEL PERFORMANCE:
+   - Best Model: Logistic Regression
+   - Optimal Threshold: 0.400
+   - F2 Score: 0.5726
+   - This model prioritizes catching defaults (high recall) while maintaining reasonable precision
+
+2. KEY RISK FACTORS:
+
+3. BUSINESS RECOMMENDATIONS:
+   - Monitor customers with high payment delays (pay_0, pay_2, etc.)
+   - Focus on customers with low pay-to-bill ratios
+   - Implement early warning systems for customers showing payment inconsistency
+   - Consider credit limit adjustments based on utilization patterns
+
+4. MODEL DEPLOYMENT CONSIDERATIONS:
+   - Regular model retraining recommended (monthly/quarterly)
+   - Monitor model performance with new data
+   - Consider A/B testing for threshold optimization
+   - Expected default rate in validation set: 55.6%
+
+5. FINANCIAL IMPACT:
+   - Total customers evaluated: 5,016
+   - Predicted defaults: 2,791
+   - Default rate: 55.6%
+
+==================================================
+ANALYSIS COMPLETE
+==================================================
+
+Files generated:
+1. submission_22112016.csv - Final predictions
+2. All visualizations and analysis above
+
+
+
+
